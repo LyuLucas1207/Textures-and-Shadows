@@ -84,4 +84,53 @@ The loader in this project’s Three.js build sets an appropriate **color space*
 
 ---
 
-Parts **1 (c)** and **(d)** will be documented here later.
+## Part 1 (c) — Environment mapping (`samplerCube`)
+
+### What this part does
+
+Part (c) is **not** another background pass. It uses the **same** (or compatible) **cube texture** as in (b), but bound to a **`samplerCube`** and sampled **per pixel** on meshes so they look **mirror-like**: the color comes from `texture(skyboxCubemap, direction)` where **`direction`** is a **reflection vector** derived from the **world-space normal** and the **view direction**. The skybox in (b) fills empty pixels behind geometry; **environment mapping** paints that environment **onto** reflective objects (here, the **armadillo** and the floating **debug cube**).
+
+### Files
+
+| Piece | Path |
+|--------|------|
+| Vertex stage | `part1/glsl/envmap.vs.glsl` |
+| Fragment stage | `part1/glsl/envmap.fs.glsl` |
+| Material + uniform | `part1/A4.js` (`envmapMaterial`, `skyboxCubeMapUniform`) |
+
+### Vertex shader — `envmap.vs.glsl`
+
+Outputs **world-space** quantities for correct alignment with `scene.background`:
+
+- **`worldPosition`** — `(modelMatrix * vec4(position, 1.0)).xyz`
+- **`worldNormal`** — `mat3(modelMatrix) * normal` (then `normalize` in the fragment shader; uniform scale keeps this simple for the provided assets)
+
+View-space **`vcsNormal`** / **`vcsPosition`** remain available if you extend the material later.
+
+### Fragment shader — `envmap.fs.glsl`
+
+1. **Unit normal** `N = normalize(worldNormal)`.
+2. **Incident** vector (camera → surface): `I = normalize(worldPosition - cameraPosition)` (`cameraPosition` is supplied by Three.js in world space).
+3. **Reflection**: `R = reflect(I, N)`.
+4. **Sample the cubemap**: `texture(skyboxCubemap, R_adjusted).rgb`.
+
+The [Three.js `CubeTextureLoader` documentation](https://threejs.org/docs/#api/en/loaders/CubeTextureLoader) notes a **handedness** mismatch: cube layouts follow a convention where **+X** is defined while looking up **+Z**, i.e. a **left-handed** cubemap frame, while the engine scene is **right-handed**. In practice you often **negate or swap components** of **`R`** before sampling (e.g. adjust **X**) so reflections line up with the background. If a face looks wrong when orbiting **above/below** or **left/right**, tweak that mapping until the reflection tracks the skybox coherently.
+
+### JavaScript wiring
+
+- **`const skyboxCubeMapUniform = { type: "t", value: skyboxCubemap };`** — tells `ShaderMaterial` to bind the loaded **`CubeTexture`** like a **`samplerCube`**.
+- **`envmapMaterial.uniforms.skyboxCubemap`** references that object so the GLSL name **`skyboxCubemap`** matches.
+
+### How to check it
+
+Orbit the camera **around** the armadillo and the cube, and briefly look from **above** and **below**; the reflected features should **move** with the view like a real chrome surface. Compare with the yellow character, which still uses a **non–env-map** shader and stays largely diffuse.
+
+### Screenshots
+
+![Part 1c — reflective armadillo and env-mapped scene (view 1)](images/docs/part1c.png)
+
+![Part 1c — reflective armadillo and env-mapped scene (view 2)](images/docs/part1c_2.png)
+
+---
+
+Part **1 (d)** will be documented here later.

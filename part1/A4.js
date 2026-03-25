@@ -173,6 +173,22 @@ const shayDNormalTextureUniform = null; // Q2 TODO make texture uniform
 
 //! =============================== b ===============================
 // Q1b: cube environment skybox — order must be +X, -X, +Y, -Y, +Z, -Z for CubeTextureLoader
+/*
+example：
+{
+  const loader = new THREE.CubeTextureLoader();
+  const texture = loader.load([
+    'resources/images/cubemaps/computer-history-museum/pos-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-x.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-y.jpg',
+    'resources/images/cubemaps/computer-history-museum/pos-z.jpg',
+    'resources/images/cubemaps/computer-history-museum/neg-z.jpg',
+  ]);
+  scene.background = texture;
+}
+  from https://threejs.org/manual/?#en/backgrounds
+*/
 const skyboxCubemap = new THREE.CubeTextureLoader().load([
   'images/envmap/posx.jpg',
   'images/envmap/negx.jpg',
@@ -183,9 +199,12 @@ const skyboxCubemap = new THREE.CubeTextureLoader().load([
 ]);
 scene.background = skyboxCubemap;
 //! =============================== b ===============================
-// Q1c TODO: make uniform for skybox to pass into shaders
-const skyboxCubeMapUniform = null;
 
+
+//! =============================== c ===============================
+// Q1c: same CubeTexture as scene.background, bound for samplerCube in env shaders
+const skyboxCubeMapUniform = { type: "t", value: skyboxCubemap }; //! Create a uniform for the skybox cubemap
+//! =============================== c ===============================
 
 // Materials
 const postMaterial = new THREE.ShaderMaterial({
@@ -250,13 +269,16 @@ const shayDMaterial = new THREE.ShaderMaterial({
 // Needed for Shay depth info.
 const shadowMaterial = new THREE.ShaderMaterial({});
 
-// Q1c HINT : Pass the necessary uniforms
+
+//! =============================== c ===============================
+// Q1c environment map on armadillo + debug cube
+// Q1c make uniform for skybox to pass into shaders
 const envmapMaterial = new THREE.ShaderMaterial({
   uniforms: {
-    // TODO
+    skyboxCubemap: skyboxCubeMapUniform, //! Using the uniform for the skybox cubemap
   }
 });
-
+//! =============================== c ===============================
 // Load shaders
 const shaderFiles = [
   'glsl/envmap.vs.glsl',
