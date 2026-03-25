@@ -197,3 +197,40 @@ Depth map visualization (scene 2):
 
 Final shadowed scene with PCF (scene 3):
 ![Part 1d — scene 3 shadowed](images/docs/part1d_s3.png)
+
+---
+## Part 1 (e) — Image-based Lighting (IBL)
+
+### What this part does
+This part uses **Image-based Lighting (IBL)**: instead of manually placing lights to approximate reflections/indirect illumination, we load a real-world captured **HDR environment** (the EXR file), convert it into an environment-map form compatible with PBR, and then use it as the helmet’s **environment lighting source**.
+
+You can enter the IBL scene by pressing:
+- `4`
+
+The expected visual result is similar to `images/docs/part1e.png`.
+
+### Implementation — `part1/A4.js`
+Key steps:
+1. **Load the HDR (EXR) environment**
+   - Uses `EXRLoader` to load `./images/rathaus_2k.exr`.
+2. **Convert equirectangular HDR to a PBR-ready environment**
+   - `PMREMGenerator.fromEquirectangular(...)` creates a prefiltered environment representation stored in `hdrCubeRenderTarget.texture`.
+3. **Assign the environment to the IBL scene**
+   - `IBLScene.environment = hdrCubeRenderTarget.texture` (and also `IBLScene.background` for visual feedback).
+   - Since the helmet uses `THREE.MeshStandardMaterial`, Three.js will use the scene environment for its IBL reflections/lighting.
+4. **Clean up**
+   - Dispose the original EXR texture and PMREM generator after the environment has been created.
+
+In addition, the GUI controls are applied only when in the IBL render mode (sceneHandler == 4):
+1. `hdrToneMapping` (e.g. `ACESFilmic`)
+2. `exposure`
+
+### Files involved
+| Role | Path |
+|---|---|
+| Main IBL + scene wiring | `part1/A4.js` |
+| EXR decoding | `part1/js/EXRLoader.js` |
+| IBL HDR/PMREM logic | `part1/A4.js` (via `THREE.PMREMGenerator`) |
+
+### Screenshot
+![Part 1e — completed IBL scene](images/docs/part1e.png)
