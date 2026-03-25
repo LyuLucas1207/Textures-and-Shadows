@@ -171,9 +171,18 @@ const lightPositionUniform = { type: "v3", value: shadowCam.position };
 const shayDColorTextureUniform = null; // Q2 TODO make texture uniform
 const shayDNormalTextureUniform = null; // Q2 TODO make texture uniform
 
-// Q1b TODO: load the skybox textures
-const skyboxCubemap = null;
-
+//! =============================== b ===============================
+// Q1b: cube environment skybox — order must be +X, -X, +Y, -Y, +Z, -Z for CubeTextureLoader
+const skyboxCubemap = new THREE.CubeTextureLoader().load([
+  'images/envmap/posx.jpg',
+  'images/envmap/negx.jpg',
+  'images/envmap/posy.jpg',
+  'images/envmap/negy.jpg',
+  'images/envmap/posz.jpg',
+  'images/envmap/negz.jpg',
+]);
+scene.background = skyboxCubemap;
+//! =============================== b ===============================
 // Q1c TODO: make uniform for skybox to pass into shaders
 const skyboxCubeMapUniform = null;
 

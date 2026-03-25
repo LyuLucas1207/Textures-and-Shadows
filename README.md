@@ -61,4 +61,27 @@ After loading GLSL sources with `ShaderMaterial`, assign **`vertexShader`** / **
 
 ---
 
-Parts **1 (b)**, **(c)**, and **(d)** will be documented here later.
+## Part 1 (b) — Cube skybox (`scene.background`)
+
+### What this part does
+
+Part (b) replaces the flat clear color with a **cube environment map**: six square images are loaded as one **`CubeTexture`** and assigned to **`scene.background`**. Three.js draws this as an infinite surrounding environment from the main camera’s viewpoint, so orbiting the scene feels like standing inside a textured room/skydome built from the six faces.
+
+### Assets
+
+Six JPEGs live under **`part1/images/envmap/`** (e.g. `posx.jpg`, `negx.jpg`, `posy.jpg`, `negy.jpg`, `posz.jpg`, `negz.jpg`). They should form a consistent panoramic set (same exposure / horizon).
+
+### Implementation — `part1/A4.js`
+
+1. **`THREE.CubeTextureLoader()`** — `load()` takes an array of **six URLs** in **fixed order**: **+X, −X, +Y, −Y, +Z, −Z** (same convention as the [Three.js skybox / `CubeTextureLoader`](https://threejs.org/docs/#api/en/loaders/CubeTextureLoader) docs). Wrong order produces seams or mismatched faces.
+2. **`scene.background = skyboxCubemap`** — stores the result in the variable **`skyboxCubemap`** and attaches it to the main **`scene`** from `createScene(...)`. No extra CSS background is required; the WebGL pass clears/fills using the scene background when present.
+
+The loader in this project’s Three.js build sets an appropriate **color space** on the cube texture for color data.
+
+### Screenshot
+
+![Part 1b — scene with cube environment background](images/docs/part1b.png)
+
+---
+
+Parts **1 (c)** and **(d)** will be documented here later.
