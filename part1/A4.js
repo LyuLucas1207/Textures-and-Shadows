@@ -446,17 +446,43 @@ function update()
   }
   else if (sceneHandler == 2) {
     // Q1d Visualise the shadow map
-    // TODO: First pass to get the depth value
 
-    // TODO: Second Pass, visualise shadow map to quad
+    //! =============================== d ===============================
+    //! First pass: render depth from the light into the render target.
+    //! We dont need to show on actual window, only draw this in buff; if use setRenderTarget. renderer.render(shadowScene, shadowCam) will not 
+    //! in actual window, it's drawn to framebuffer.
+    renderer.setRenderTarget(renderTarget);//! https://threejs.org/docs/#WebGLRenderTarget
+    renderer.clear();//! Clear the render target
+    renderer.render(shadowScene, shadowCam);//! Render the shadow scene from the light camera
 
+    // Second pass: visualize the depth texture on the post quad.
+    postMaterial.uniforms.tDepth.value = renderTarget.depthTexture;
+    //! Set the null as the render target; then draw will be in actually window.
+    renderer.setRenderTarget(null);
+    renderer.clear();
+    renderer.render(postScene, postCam);
+
+    //! =============================== d ===============================
   }
   else if (sceneHandler == 3) {
     // Q1d Do the multipass shadowing
-    // TODO: First pass
 
-    // TODO: True second pass, change below
+    //! =============================== d ===============================
+    //! First pass: render depth from the light into the render target.
+    renderer.setRenderTarget(renderTarget);//! Set the depth texture as the render target
+    renderer.clear();
+    renderer.render(shadowScene, shadowCam); 
+
+    // Bind depth texture + texel size into the floor shader for PCF.
+    floorMaterial.uniforms.shadowMap.value = renderTarget.depthTexture;
+    // `textureSize` is a PCF sampling step (texel step), used to represent:
+    // how much to add to "move 1 pixel (texel)" in the UV coordinate system of the shadow map.
+    // The texture coordinates of the shadow map are [0,1].
+    floorMaterial.uniforms.textureSize.value = 1.0 / renderTarget.width;
+    //! =============================== d ===============================
+    // Second pass: render the final scene from the main camera.
     renderer.setRenderTarget(null);
+    renderer.clear();
     renderer.render(scene, camera);
 
   }

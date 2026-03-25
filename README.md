@@ -133,4 +133,67 @@ Orbit the camera **around** the armadillo and the cube, and briefly look from **
 
 ---
 
-Part **1 (d)** will be documented here later.
+## Part 1 (d) — Shadow Mapping (PCF smoothing)
+
+### What this part does
+This part implements **shadow mapping** so that the **armadillo** and **Shay D. Pixel** can cast shadows onto the **floor**.
+
+The pipeline is:
+1. Render a **shadow map** (a depth texture) from the **light camera** viewpoint.
+2. For each floor fragment, project it into **light space**, look up the corresponding depth in the shadow map, and decide whether the fragment is **occluded** (in shadow).
+3. Smooth the hard shadow edges using **PCF (percentage closer filtering)** by averaging the shadow test over a small neighborhood of texels.
+
+### Key bindings (scene switching)
+Press:
+- `1`: render the scene from the **light camera** (debug light view)
+- `2`: visualize the **depth map / shadow map** (debug)
+- `3`: render the **final shadowed scene** (floor uses PCF)
+
+### Rendering flow / passes (`part1/A4.js`)
+The implementation uses two relevant multipass modes:
+
+#### Scene 2 — visualize depth map
+1. **Pass 1**: render `shadowScene` with `shadowCam` into a `WebGLRenderTarget` (`renderTarget`).
+2. Feed `renderTarget.depthTexture` into `postMaterial.uniforms.tDepth`.
+3. **Pass 2**: draw `postQuad` in `postScene`, where `render.fs.glsl` displays the depth texture as a grayscale image.
+
+This corresponds to the depth-map screenshot shown in `images/docs/part1d_s2.png`.
+
+#### Scene 3 — shadowed render (PCF)
+1. **Pass 1**: render `shadowScene` with `shadowCam` into `renderTarget.depthTexture`.
+2. Bind:
+   - `floorMaterial.uniforms.shadowMap = renderTarget.depthTexture`
+   - `floorMaterial.uniforms.textureSize = 1.0 / renderTarget.width` (PCF texel step)
+3. **Pass 2**: render the main `scene` with the main `camera`. The floor fragment shader computes the shadow test using the bound `shadowMap`.
+
+This corresponds to the shadowed result shown in `images/docs/part1d_s3.png`.
+
+### Files involved
+| Stage | File | Role |
+|---|---|---|
+| Light depth pass | `part1/glsl/shadow.vs.glsl`, `part1/glsl/shadow.fs.glsl` | Used to render shadow casters into the depth texture (color output is irrelevant). |
+| Floor shadow test | `part1/glsl/floor.vs.glsl`, `part1/glsl/floor.fs.glsl` | Projects floor fragments into light space and performs depth comparison + PCF smoothing. |
+| Depth visualization (debug) | `part1/glsl/render.vs.glsl`, `part1/glsl/render.fs.glsl` | Samples `tDepth` and renders it as grayscale for scene 2. |
+| Multipass orchestration | `part1/A4.js` | Creates/uses `renderTarget`, runs render passes for scene 2/3, and binds uniforms to shaders. |
+
+### PCF logic (inside `floor.fs.glsl`)
+For each fragment:
+1. Project `lightSpaceCoords` into shadow-map UVs:
+   - `projCoords = lightSpaceCoords.xyz / lightSpaceCoords.w`
+   - `projCoords = projCoords * 0.5 + 0.5`  (map to `[0,1]`)
+2. Run `inShadow()` by comparing:
+   - `closestDepth = texture(shadowMap, uv).r`
+   - if `closestDepth < fragDepth - bias` then occluded
+3. Apply **3x3 PCF**:
+   - sample 9 neighboring texels around the projected UV
+   - average the occlusion results to get a smooth `shadowOcclusion` in `[0,1]`
+4. Combine with lighting:
+   - `shadowOcclusion = 1` means fully shadowed -> only ambient
+   - otherwise visibility scales `(diffuse + specular)` by `(1.0 - shadowOcclusion)`
+
+### Screenshots
+Depth map visualization (scene 2):
+![Part 1d — scene 2 depth map](images/docs/part1d_s2.png)
+
+Final shadowed scene with PCF (scene 3):
+![Part 1d — scene 3 shadowed](images/docs/part1d_s3.png)
