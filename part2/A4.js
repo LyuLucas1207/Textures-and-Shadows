@@ -31,7 +31,9 @@ const IBLCamera = new THREE.PerspectiveCamera(40, window.innerWidth / window.inn
 const IBLScene = new THREE.Scene();
 IBLCamera.position.set(0.0, 1.5, 4.0);
 IBLCamera.lookAt(IBLScene.position);
-IBLScene.background = new THREE.Color(0x000000);
+//! =============================== e ===============================
+// IBLScene.background = new THREE.Color(0x000000);
+//! =============================== e ===============================
 let hdrCubeRenderTarget;
 
 const IBLParams = {
@@ -54,6 +56,27 @@ THREE.DefaultLoadingManager.onLoad = function ()
 
 const pmremGenerator = new THREE.PMREMGenerator(renderer);
 pmremGenerator.compileEquirectangularShader();
+
+//! =============================== e ===============================
+// Q1e: EXR → PMREM cube map for IBL view (mode 4). Linear HDR env + tone mapping in render loop.
+const exrLoader = new EXRLoader(); //! Load the EXR file
+/*
+The browser sends a request to read a file (from the network/disk). 
+After reading, it needs to parse the OpenEXR data 
+and then upload/convert the data into texture resources that can be used in WebGL. 
+These steps can all be time-consuming. 
+If a synchronous approach (blocking and waiting) is used, 
+it can cause the page to freeze, rendering to stop, and user operations to become unresponsive. 
+Therefore, Three.js makes loading asynchronous.
+*/
+const exrEquirect = await exrLoader.loadAsync('./images/rathaus_2k.exr'); //! Load the EXR file
+exrEquirect.mapping = THREE.EquirectangularReflectionMapping;
+hdrCubeRenderTarget = pmremGenerator.fromEquirectangular(exrEquirect);
+IBLScene.background = hdrCubeRenderTarget.texture;
+IBLScene.environment = hdrCubeRenderTarget.texture;
+exrEquirect.dispose(); //! Dispose the EXR file
+pmremGenerator.dispose(); //! Dispose the PMREM generator
+//! =============================== e ===============================
 
 // Helmet glTF textures 
 function loadTextureForGLTF(path, useForColorData = false)
@@ -90,6 +113,7 @@ const helmetMaterial = new THREE.MeshStandardMaterial({
   aoMap: helmetAmbientOcclusionMap,
 });
 
+//! =============================== e ===============================
 // Q1e TODO: This ambient light is added for temporary visualization of the helmet. 
 // Delete this after added the IBL.
 // You need to load the HDR background (./images/rathaus_2k.exr) with the EXRLoader
