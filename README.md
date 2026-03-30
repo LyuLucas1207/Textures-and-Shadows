@@ -197,3 +197,45 @@ Depth map visualization (scene 2):
 
 Final shadowed scene with PCF (scene 3):
 ![Part 1d — scene 3 shadowed](images/docs/part1d_s3.png)
+
+---
+
+## Part 2 — Integrated demo (`part2/`)
+
+### What this part does
+
+Part 2 is the **self-contained** version of Assignment 4 under **`part2/`**: same ideas as Part 1 **(a–d)**—**textured character** (Blinn–Phong + maps), **cube skybox** on `scene.background`, **environment mapping** on the armadillo and the floating **debug cube**, and **shadow mapping with PCF** on the floor—plus a separate **IBL (image-based lighting)** view for the **Damaged Helmet** glTF when you switch modes. Run it from **`part2/A4.html`** (all asset paths are relative to that folder).
+
+### Layout vs Part 1
+
+| Area | Path under repo |
+|------|-------------------|
+| Entry | `part2/A4.html` → `part2/A4.js` |
+| Shaders | `part2/glsl/*.glsl` |
+| Shay D., floor images | `part2/images/` |
+| Cubemap faces | `part2/images/envmap/` |
+| Armadillo | `part2/gltf/armadillo.obj` |
+| Helmet (IBL scene) | `part2/gltf/DamagedHelmet/` |
+
+### Keyboard modes
+
+Same as Part 1 **(d)**:
+
+- **`1`** — light-camera debug view  
+- **`2`** — depth / shadow-map visualization  
+- **`3`** — final scene (shadowed floor + env-mapped objects + textured character)  
+- **`4`** — IBL helmet scene (`MeshStandardMaterial`, HDR / tone mapping via `dat.GUI` when wired)
+
+### Env-map debug cube controls (`dat.GUI`)
+
+A **top-right** panel drives the large **reflective cube** so you can see the cubemap **change on the surface** as it spins about its center:
+
+- **Rotation speed (rad/s)** — slider; `0` stops rotation.  
+- **Rotate about X / Y / Z** — enable or disable incremental rotation per axis.  
+- **Reset X / Y / Z rotation** — buttons that zero **only** that axis’s `rotation` component (others unchanged).
+
+The **IBL** controls (exposure, tone mapping) use a **top-left** panel so the two panels do not overlap.
+
+### Screenshot
+
+![Part 2 — env-mapped cube, character, plaza skybox, and cube GUI](images/docs/part2.png)
